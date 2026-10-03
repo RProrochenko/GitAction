@@ -1,0 +1,38 @@
+# Шлях у репозиторії: .github/workflows/ci.yml
+name: CI
+
+# 1. Тригер на push + 2. ручний запуск (кнопка "Run workflow" у вкладці Actions)
+on:
+  push:
+    branches: [ main ]        # приберіть рядок branches, щоб запускати на будь-яку гілку
+  workflow_dispatch:
+
+jobs:
+  build:
+    # 3. Операційна система раннера
+    runs-on: ubuntu-latest
+
+    steps:
+      # 5. Клонування проєкту (на раннері репозиторію немає, поки його не завантажити)
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # 4. Встановлення ПЗ: JDK 21 + кеш Maven-залежностей
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # 6. Завантаження залежностей
+      - name: Download dependencies
+        run: mvn -B dependency:go-offline
+
+      # 7. Збірка проєкту (без тестів — вони окремим кроком)
+      - name: Build
+        run: mvn -B package -DskipTests
+
+      # 8. Юніт-тести
+      - name: Run unit tests
+        run: mvn -B test
